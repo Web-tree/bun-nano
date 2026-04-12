@@ -1,0 +1,25 @@
+# bun build --compile + scratch.
+# The compiled binary dynamically links to musl, libstdc++, and libgcc_s,
+# so we stage them from alpine and copy into scratch.
+FROM oven/bun:1 AS build
+WORKDIR /src
+COPY server.ts .
+RUN bun build \
+      --compile \
+      --minify \
+      --target=bun-linux-x64-musl-baseline \
+      ./server.ts \
+      --outfile /out/server
+
+FROM alpine:3.19 AS libs
+RUN apk add --no-cache libstdc++ && \
+    mkdir -p /deps/lib /deps/usr/lib && \
+    cp -Pv /lib/ld-musl-x86_64.so.1 /deps/lib/ && \
+    cp -Pv /usr/lib/libstdc++.so.6* /deps/usr/lib/ && \
+    cp -Pv /usr/lib/libgcc_s.so.1* /deps/usr/lib/
+
+FROM scratch
+COPY --from=libs /deps/ /
+COPY --from=build /out/server /server
+EXPOSE 3000
+ENTRYPOINT ["/server"]

@@ -1,0 +1,24 @@
+# bun build --compile + UPX + scratch.
+FROM oven/bun:1 AS build
+WORKDIR /src
+COPY server.ts .
+RUN bun build \
+      --compile \
+      --minify \
+      --target=bun-linux-x64-musl-baseline \
+      ./server.ts \
+      --outfile /out/server
+
+FROM alpine:3.19 AS libs
+RUN apk add --no-cache libstdc++ upx && \
+    mkdir -p /deps/lib /deps/usr/lib && \
+    cp -Pv /lib/ld-musl-x86_64.so.1 /deps/lib/ && \
+    cp -Pv /usr/lib/libstdc++.so.6* /deps/usr/lib/ && \
+    cp -Pv /usr/lib/libgcc_s.so.1* /deps/usr/lib/
+COPY --from=build /out/server /deps/server
+RUN upx --all-methods /deps/server
+
+FROM scratch
+COPY --from=libs /deps/ /
+EXPOSE 3000
+ENTRYPOINT ["/server"]

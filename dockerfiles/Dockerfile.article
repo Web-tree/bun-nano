@@ -1,0 +1,15 @@
+# Replicates https://blog.dejangegic.com/smallest-bun-docker-image
+# UPX-compressed bun binary on frolvlad/alpine-glibc
+FROM oven/bun:1 AS bun
+
+FROM alpine:3.19 AS compress
+RUN apk add --no-cache upx
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+RUN upx --all-methods /usr/local/bin/bun
+
+FROM frolvlad/alpine-glibc:alpine-3.19
+COPY --from=compress /usr/local/bin/bun /usr/local/bin/bun
+WORKDIR /app
+COPY server.ts .
+EXPOSE 3000
+ENTRYPOINT ["bun", "run", "server.ts"]

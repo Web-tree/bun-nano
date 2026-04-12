@@ -1,0 +1,28 @@
+# Generic test Dockerfile: builds any test app into the compile-scratch image.
+# Usage: docker build --build-arg APP=elysia -f dockerfiles/Dockerfile.test .
+ARG APP=elysia
+
+FROM oven/bun:1 AS build
+ARG APP
+WORKDIR /src
+COPY tests/${APP}/ .
+RUN if [ -f package.json ]; then bun install; fi
+RUN bun build \
+      --compile \
+      --minify \
+      --target=bun-linux-x64-musl-baseline \
+      ./app.ts \
+      --outfile /out/server
+
+FROM alpine:3.19 AS libs
+RUN apk add --no-cache libstdc++ && \
+    mkdir -p /deps/lib /deps/usr/lib /deps/tmp && \
+    cp -Pv /lib/ld-musl-x86_64.so.1 /deps/lib/ && \
+    cp -Pv /usr/lib/libstdc++.so.6* /deps/usr/lib/ && \
+    cp -Pv /usr/lib/libgcc_s.so.1* /deps/usr/lib/
+
+FROM scratch
+COPY --from=libs /deps/ /
+COPY --from=build /out/server /server
+EXPOSE 3000
+ENTRYPOINT ["/server"]

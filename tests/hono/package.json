@@ -1,0 +1,6 @@
+{
+  "name": "test-hono",
+  "dependencies": {
+    "hono": "^4"
+  }
+}
