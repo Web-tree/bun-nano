@@ -9,7 +9,7 @@ ARG BUN_VERSION
 ARG TARGETARCH
 
 RUN apk add --no-cache curl unzip && \
-    ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "arm64") && \
+    ARCH=$([ "$TARGETARCH" = "amd64" ] && echo "x64" || echo "aarch64") && \
     curl -fsSL \
       "https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-${ARCH}-musl.zip" \
       -o /tmp/bun.zip && \
