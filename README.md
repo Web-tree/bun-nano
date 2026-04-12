@@ -4,39 +4,51 @@ The smallest production-ready Bun Docker image. Multi-arch (`amd64` + `arm64`), 
 
 | Variant | Image Size | Description |
 |---|---|---|
-| `bun-nano:latest` | **42.5 MB** | Alpine + musl Bun binary |
-| `bun-nano:upx` | **29.8 MB** | Same + UPX compression (~250ms cold start) |
+| `webtreeofficial/bun-nano:latest` | **42.5 MB** | Alpine + musl Bun binary |
+| `webtreeofficial/bun-nano:upx` | **29.8 MB** | Same + UPX compression (~250ms cold start) |
 
 Compare to official `oven/bun:1`: 88.8 MB (Debian), `oven/bun:1-alpine`: 110+ MB.
 
 ## Quick Start
 
+**Docker Hub:**
+
 ```dockerfile
-FROM ghcr.io/YOUR_USERNAME/bun-nano:latest
+FROM webtreeofficial/bun-nano:latest
 COPY package.json bun.lock* ./
 RUN bun install --production
 COPY . .
 CMD ["bun", "run", "server.ts"]
 ```
 
-Or use the UPX variant for the smallest possible image:
+**GitHub Container Registry:**
 
 ```dockerfile
-FROM ghcr.io/YOUR_USERNAME/bun-nano:upx
+FROM ghcr.io/web-tree/bun-nano:latest
+```
+
+UPX variant (smallest):
+
+```dockerfile
+FROM webtreeofficial/bun-nano:upx
 ```
 
 ## Tags
 
-Images follow Bun's version scheme:
+Images follow Bun's version scheme. Available on both registries:
+
+- `webtreeofficial/bun-nano:<tag>` (Docker Hub)
+- `ghcr.io/web-tree/bun-nano:<tag>` (GHCR)
 
 | Tag | Description |
 |---|---|
-| `bun-nano:1.3.12` | Specific Bun version |
-| `bun-nano:1.3` | Latest patch in 1.3.x |
-| `bun-nano:1` | Latest in 1.x |
-| `bun-nano:latest` | Latest release |
-| `bun-nano:1.3.12-upx` | UPX-compressed, specific version |
-| `bun-nano:upx` | UPX-compressed, latest |
+| `1.3.12` | Specific Bun version |
+| `1.3` | Latest patch in 1.3.x |
+| `1` | Latest in 1.x |
+| `latest` | Latest release |
+| `1.3.12-upx` | UPX-compressed, specific version |
+| `1.3-upx` | UPX-compressed, latest patch in 1.3.x |
+| `upx` | UPX-compressed, latest |
 
 ## How It Works
 
