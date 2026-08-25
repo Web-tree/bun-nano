@@ -59,13 +59,23 @@ Images follow Bun's version scheme. Available on both registries:
 
 ## Auto-Release
 
-A daily cron job checks for new Bun releases. When a new version is detected:
+Renovate tracks [oven-sh/bun releases](https://github.com/oven-sh/bun/releases) and
+keeps the version pin fresh. When upstream ships a new Bun:
 
-1. `check-bun-release.yml` creates a git tag `v{VERSION}`
-2. `release.yml` triggers, builds both variants for both architectures
-3. Pushes to Docker Hub and GHCR
+1. Renovate opens a PR bumping `BUN_VERSION` in **both** `Dockerfile` and `docker-bake.hcl`
+2. `ci.yml` gates that PR: it confirms upstream published musl assets for `x64` **and**
+   `aarch64`, builds the default and UPX variants, and asserts the running binary
+   reports exactly the pinned version
+3. Renovate auto-merges the PR once CI is green (majors are held for review)
+4. Merging to `main` triggers `release.yml`, which builds both variants for both
+   architectures, pushes to Docker Hub and GHCR, and only then creates the `v{VERSION}` tag
 
-Manual releases: `gh workflow run release.yml -f bun_version=1.3.12`
+The version pin in `Dockerfile` is the single source of truth; `scripts/bun-version.sh`
+reads it and fails loudly if it is missing, malformed, or out of step with
+`docker-bake.hcl`. Because the images are built *before* the tag is created, a tag can
+only exist if the images behind it exist.
+
+Manual release: `gh workflow run release.yml` (publishes whatever `main` currently pins).
 
 ## Framework Compatibility
 

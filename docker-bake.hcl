@@ -72,3 +72,17 @@ target "local" {
   }
   tags = ["bun-nano:local"]
 }
+
+# Local testing target for the UPX variant. CI builds this alongside `local`:
+# UPX is the fragile half of the build (it rewrites the Bun binary in place) and
+# until now it was only ever exercised at release time, after the tag existed.
+target "local-upx" {
+  dockerfile = "Dockerfile"
+  target     = "upx"
+  platforms  = ["linux/amd64"]
+  args = {
+    BUN_VERSION    = BUN_VERSION
+    ALPINE_VERSION = ALPINE_VERSION
+  }
+  tags = ["bun-nano:local-upx"]
+}
