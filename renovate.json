@@ -1,0 +1,79 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+  "enabledManagers": ["custom.regex", "github-actions"],
+  "customManagers": [
+    {
+      "description": "Track upstream Bun releases. This is the whole point of the repo: bun-nano exists to republish oven-sh/bun as a minimal image, so the pinned BUN_VERSION *is* the product. The pin lives in two files and both are matched here deliberately — one PR must move Dockerfile and docker-bake.hcl together, otherwise bake builds a different Bun than the Dockerfile claims and the published tags lie. scripts/bun-version.sh fails the build if they ever diverge. The built-in `dockerfile` manager is NOT enabled: it would open a second, competing PR for the `alpine:${ALPINE_VERSION}` FROM lines that the ALPINE_VERSION manager below already owns.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^Dockerfile$/", "/^docker-bake\\.hcl$/"],
+      "matchStrings": [
+        "ARG BUN_VERSION=(?<currentValue>\\S+)",
+        "variable \"BUN_VERSION\"\\s*\\{\\s*default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "oven-sh/bun",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^bun-v(?<version>.+)$",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "Keep the Alpine base moving too — it supplies libstdc++ and the CVE surface of every published variant. Same two-file pairing as BUN_VERSION, same reason.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^Dockerfile$/", "/^docker-bake\\.hcl$/"],
+      "matchStrings": [
+        "ARG ALPINE_VERSION=(?<currentValue>\\S+)",
+        "variable \"ALPINE_VERSION\"\\s*\\{\\s*default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "alpine",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Auto-merge Bun minor/patch bumps. Safe to automate because ci.yml is a real gate, not a formality: it builds both published variants, asserts the running binary reports exactly the pinned version, and confirms upstream actually shipped musl assets for both architectures. A Bun release that would produce a broken image cannot reach main. Merging to main is what triggers release.yml.",
+      "matchPackageNames": ["oven-sh/bun"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "addLabels": ["bun"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "A Bun major (2.x) gets human review. Note that Bun treats semver loosely — the Zig-to-Rust engine rewrite shipped as the 1.3-to-1.4 *minor*, so the automerge rule above is doing real work and the CI gate is what makes it safe.",
+      "matchPackageNames": ["oven-sh/bun"],
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["bun", "major-bump"],
+      "automerge": false
+    },
+    {
+      "matchPackageNames": ["alpine"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "addLabels": ["alpine"],
+      "automerge": true,
+      "automergeType": "pr",
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "matchPackageNames": ["alpine"],
+      "matchUpdateTypes": ["major"],
+      "addLabels": ["alpine", "major-bump"],
+      "automerge": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "addLabels": ["ci", "github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions-major",
+      "addLabels": ["ci", "github-actions", "major-bump"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ]
+}
