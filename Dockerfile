@@ -1,5 +1,5 @@
 ARG BUN_VERSION=1.4.0
-ARG ALPINE_VERSION=3.21
+ARG ALPINE_VERSION=3.24
 
 # ---------------------------------------------------------------------------
 # Stage 1: download the musl build of Bun for the target architecture
