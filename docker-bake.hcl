@@ -1,5 +1,5 @@
 variable "BUN_VERSION" {
-  default = "1.4.4"
+  default = "1.4.5"
 }
 
 variable "ALPINE_VERSION" {
